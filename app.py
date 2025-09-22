@@ -5,19 +5,13 @@ import plotly.graph_objects as go
 import os
 
 # =======================
-# Rutas seguras para Excel y logo
+# Configuración del archivo Excel
 # =======================
-BASE_DIR = os.path.dirname(__file__)
-EXCEL_PATH = os.path.join(BASE_DIR, "jair.xlsx")
-LOGO_PATH = os.path.join(BASE_DIR, "logo.png")
-
+EXCEL_PATH = r"C:\Users\HOME\Desktop\PROCESOS\jair.xlsx"
 if not os.path.exists(EXCEL_PATH):
     st.error(f"No se encontró el archivo en: {EXCEL_PATH}")
     st.stop()
 
-# =======================
-# Cargar datos
-# =======================
 @st.cache_data
 def load_data():
     return pd.read_excel(EXCEL_PATH, engine="openpyxl")
@@ -25,7 +19,7 @@ def load_data():
 df = load_data()
 
 # =======================
-# Configuración página y tema
+# Configuración página y tema oscuro
 # =======================
 st.set_page_config(layout="wide", page_title="Dashboard Clínica Viva")
 tema_oscuro = st.sidebar.checkbox("Tema oscuro", value=False)
@@ -34,12 +28,14 @@ text_color = "#ffffff" if tema_oscuro else "#3498db"
 card_bg = "#2e2e2e" if tema_oscuro else "#ffffff"
 
 # =======================
-# Header con logo y título
+# Header con logo grande y título
 # =======================
+logo_path = r"C:\Users\HOME\Desktop\PROCESOS\logo.png"
 header_col1, header_col2 = st.columns([1,6])
+
 with header_col1:
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, width=150)
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=150)
 
 with header_col2:
     st.markdown(f"""
@@ -47,6 +43,7 @@ with header_col2:
             <h1 style='color:{text_color}; margin:0;'>📊 Dashboard de Reclamos - Clínica Viva</h1>
         </div>
         """, unsafe_allow_html=True)
+
 st.markdown(f"<hr style='border:2px solid {text_color}'>", unsafe_allow_html=True)
 
 # =======================
@@ -124,6 +121,7 @@ def chart_card(title, fig):
 # Fila 1: Estado Final, Canales, Documento
 # =======================
 fila1 = st.columns(3)
+
 with fila1[0]:
     if "ESTADO FINAL" in df_filtered.columns:
         fig_estado = px.histogram(df_filtered, x="ESTADO FINAL", color="ESTADO FINAL",
@@ -155,6 +153,7 @@ with fila1[2]:
 # Fila 2: Tiempo de Respuesta
 # =======================
 fila2 = st.columns(2)
+
 with fila2[0]:
     if not tiempos.empty:
         fig_hist = px.histogram(tiempos, nbins=20, labels={"value":"Días"}, color_discrete_sequence=["#3498db"])
@@ -188,8 +187,10 @@ if not tiempos.empty:
 # Evolución de Reclamos por Mes
 # =======================
 if "FECHA DEL INCIDENTE" in df_filtered.columns and "ESTADO FINAL" in df_filtered.columns:
+    df_filtered['FECHA DEL INCIDENTE'] = pd.to_datetime(df_filtered['FECHA DEL INCIDENTE'])
     df_grouped = df_filtered.groupby([df_filtered['FECHA DEL INCIDENTE'].dt.to_period('M'), 'ESTADO FINAL']).size().reset_index(name='Cantidad')
     df_grouped['FECHA_DEL_INCIDENTE'] = df_grouped['FECHA DEL INCIDENTE'].dt.to_timestamp()
+
     df_cerrada = df_grouped[df_grouped['ESTADO FINAL'] == 'CERRADA']
     df_activa  = df_grouped[df_grouped['ESTADO FINAL'] == 'ACTIVA']
 
@@ -213,6 +214,7 @@ if "FECHA DEL INCIDENTE" in df_filtered.columns and "ESTADO FINAL" in df_filtere
         marker=dict(size=10, line=dict(width=2, color='white')),
         hovertemplate='%{x|%b %Y}: %{y} reclamos<extra></extra>'
     ))
+
     fig_time.update_layout(
         title='📈 Evolución de Reclamos por Mes',
         title_x=0.5,
